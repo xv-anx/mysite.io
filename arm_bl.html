@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARM | 分岐値算出ツール</title>
+  <!-- Tailwind CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .fade-in {
+      animation: fadeIn 1s;
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+  <div class="min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full p-6 bg-white shadow-md rounded-md">
+      <h1 class="text-center text-2xl font-semibold mb-6">分岐値算出</h1>
+      <div class="mb-4">
+        <label for="start-address" class="block text-gray-700 font-semibold mb-2">開始アドレス</label>
+        <input id="start-address" type="text" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="開始アドレスを入力" value="0x100000" oninput="restrictHexInput(this)">
+      </div>
+      <div class="mb-4">
+        <label for="end-address" class="block text-gray-700 font-semibold mb-2">終了アドレス</label>
+        <input id="end-address" type="text" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="終了アドレスを入力" value="0x200000" oninput="restrictHexInput(this)">
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-700 font-semibold mb-2">結果形式</label>
+        <div>
+          <label class="block mb-2">
+            <input type="radio" name="result-format" value="EA" checked>
+            <span class="ml-2">分岐 (EAXXXXXX)</span>
+          </label>
+          <label class="block">
+            <input type="radio" name="result-format" value="EB">
+            <span class="ml-2">リンク付き分岐 (EBXXXXXX)</span>
+          </label>
+        </div>
+      </div>
+      <button onclick="calculateAndShowResult()" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md mt-4">計算して結果を表示</button>
+      <div id="result" class="mt-4 text-red-500"></div>
+    </div>
+  </div>
+
+  <script>
+    const startAdd = document.getElementById("start-address");
+    const endAdd = document.getElementById("end-address");
+    const resultDiv = document.getElementById("result");
+
+    function calculateAndShowResult() {
+      let value_type1 = parseInt(startAdd.value, 16);
+      let value_type2 = parseInt(endAdd.value, 16);
+
+      function calcBranchAddress(value_type1, value_type2) {
+        const SIZE = 2;
+        const BYTE = 4;
+        let branchAddress;
+
+        if (value_type1 === value_type2) {
+          return "アドレスが同じです。やり直してください。";
+        } else if (((value_type1 & 3) !== 0) || ((value_type2 & 3) !== 0)) {
+          return "アドレスが正しく入力されていません。";
+        }
+
+        if (value_type1 > value_type2) {
+          branchAddress = ((value_type2 - value_type1) / BYTE) - SIZE;
+          return (0xFFFFFF & branchAddress).toString(16).toUpperCase().padStart(6, '0');
+        } else if (value_type1 < value_type2) {
+          branchAddress = ((value_type1 - value_type2) / BYTE) + SIZE;
+          return (0xFFFFFF & -branchAddress).toString(16).toUpperCase().padStart(6, '0');
+        }
+
+        return "0";
+      }
+
+      const resultFormat = document.querySelector('input[name="result-format"]:checked').value;
+      const result = calcBranchAddress(value_type1, value_type2);
+
+      // 結果の表示をフェードインアニメーションさせる
+      resultDiv.textContent = "算出結果: " + (result === "アドレスが同じです。やり直してください。" ? result : resultFormat + result);
+      resultDiv.classList.remove("fade-in");
+      void resultDiv.offsetWidth; // リフローを強制することでアニメーションをリセット
+      resultDiv.classList.add("fade-in");
+    }
+
+    function restrictHexInput(input) {
+      // 入力を正規表現で16進数の形式 (0~F) に制限する
+      const pattern = /^0x[0-9a-fA-F]*$/;
+      if (!pattern.test(input.value)) {
+        input.value = "0x" + input.value.replace(/[^0-9a-fA-F]/g, "").toUpperCase();
+      }
+    }
+  </script>
+</body>
+</html>
