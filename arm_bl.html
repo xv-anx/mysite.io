@@ -66,11 +66,18 @@
         const BYTE = 4;
         let branchAddress;
 
-        if (value_type1 === value_type2) {
-          return "アドレスが同じです。やり直してください。";
-        } else if (((value_type1 & 3) !== 0) || ((value_type2 & 3) !== 0)) {
-          return "アドレスが正しく入力されていません。";
+        if (value_type1 >= 0x100000 && value_type2 >= 0x100000) {
+          if (value_type1 === value_type2) {
+            return "アドレスが同じです。やり直してください。";
+
+          } else if (((value_type1 & 3) !== 0) || ((value_type2 & 3) !== 0)) {
+            return "アドレスが正しく入力されていません。";
+          }
+        } else {
+            return "アドレスを入力してください。"
         }
+          
+        
 
         if (value_type1 > value_type2) {
           branchAddress = ((value_type2 - value_type1) / BYTE) - SIZE;
@@ -89,8 +96,10 @@
       if (result === "アドレスが同じです。やり直してください。") {
         resultDiv.textContent = result;
       } else if (result === "アドレスが正しく入力されていません。") {
-        resultDiv.textContent = result; 
-      }else {
+        resultDiv.textContent = result;
+      } else if (result === "アドレスを入力してください。") {
+        resultDiv.textContent = result;
+      } else {
         resultDiv.textContent = "算出結果: " + resultFormat + result;
       }
 
